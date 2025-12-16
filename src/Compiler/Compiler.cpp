@@ -1,4 +1,4 @@
-#include "assembler.h"
+#include "Compiler.h"
 #include "AssertUtils.h"
 #include "supported_commands.h"
 
@@ -401,4 +401,3 @@ void PrintLabels( int labels[ LABELS_NUMBER ] ) {
     for ( size_t i = 0; i < LABELS_NUMBER; i++ ) PRINT( COLOR_BRIGHT_CYAN "%-2lu - %d \n", i, labels[ i ] );
 }
 #endif
-просто мне дед сказал

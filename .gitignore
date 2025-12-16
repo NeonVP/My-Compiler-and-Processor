@@ -9,3 +9,7 @@
 /asm-test.txt
 /assembler-debug
 *.json
+
+/.cache
+compiler
+processor

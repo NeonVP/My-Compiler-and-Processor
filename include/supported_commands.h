@@ -2,7 +2,7 @@
 #define SUPPORTED_COMMANDS_H
 
 #include "processor.h"
-#include "assembler.h"
+#include "Compiler.h"
 
 const int number_of_commands = 20;
 
