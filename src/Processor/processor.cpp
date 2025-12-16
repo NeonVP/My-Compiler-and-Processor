@@ -5,6 +5,16 @@ void ProcCtor( Processor_t* processor, size_t stack_size, size_t refund_stack_si
 
     StackCtor( &( processor->stk ), stack_size );
     StackCtor( &( processor->refund_stk ), refund_stack_size );
+    
+    processor->instruction_ptr = 0;
+    processor->instruction_count = 0;
+    processor->byte_code = NULL;
+    processor->is_running = true;
+    
+    // Initialize registers to 0
+    for (int i = 0; i < REGS_NUMBER; i++) {
+        processor->regs[i] = 0;
+    }
 }
 
 void ProcDtor( Processor_t* processor ) {
@@ -125,46 +135,8 @@ int ByteCodeProcessing( Processor_t* processor ) {
     ON_DEBUG( ProcDump( processor, 0 ) );
 
     int command = 0;
-    while ( processor->instruction_ptr < processor->instruction_count ) {
-        command = processor->byte_code[ processor->instruction_ptr++ ];
+    while ( processor->instruction_ptr < processor->instruction_count && processor->is_running ) {
+        command = processor->byte_code[ processor->instruction_ptr ];
 
-        switch ( command ) {
-            case PUSH_CMD:  ProcPush ( processor ); break;
-            case POP_CMD:   ProcPop  ( processor ); break;
-            case ADD_CMD:   ProcAdd  ( processor ); break;
-            case SUB_CMD:   ProcSub  ( processor ); break;
-            case MUL_CMD:   ProcMul  ( processor ); break;
-            case DIV_CMD:   ProcDiv  ( processor ); break;
-            case POW_CMD:   ProcPow  ( processor ); break;
-            case SQRT_CMD:  ProcSqrt ( processor ); break;
-            case IN_CMD:    ProcIn   ( processor ); break;
-            case OUT_CMD:   ProcOut  ( processor ); break;
-            case PUSHR_CMD: ProcPushR( processor ); break;
-            case POPR_CMD:  ProcPopR ( processor ); break;
-
-            case CALL_CMD:  ProcCall ( processor ); break;
-            case RET_CMD:   ProcRet  ( processor ); break;
-
-            case JMP_CMD:
-            case JE_CMD:
-            case JB_CMD:
-            case JA_CMD:
-            case JBE_CMD:
-            case JAE_CMD:   ProcJump( processor ); break;
-
-            case HLT_CMD:   return 0;
-
-            default:
-                fprintf( stderr, COLOR_RED "Incorrect command %d \n" COLOR_RESET, *( processor->byte_code ) );
-                return 1;
-        }
-
-        ON_DEBUG( ProcDump( processor, 0 ); )
-        PRINT( COLOR_BLUE "Press enter for next step... \n" );
-        ON_DEBUG( getchar(); )
-    }
-
-    PRINT( COLOR_BRIGHT_YELLOW "Out %s \n", __func__ )
-
-    return 0;
-}
+        // Increment instruction pointer before executing command
+        // For commands that dont

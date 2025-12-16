@@ -164,3 +164,25 @@ void ProcRet( Processor_t* processor ) {
     processor->instruction_ptr = ( size_t ) StackTop( &( processor->refund_stk ) );
     StackPop( &( processor->refund_stk ) );
 }
+
+void ProcHlt( Processor_t* processor ) {
+    my_assert( processor, ASSERT_ERR_NULL_PTR );
+    
+    processor->is_running = false;
+}
+
+void ProcMark( Processor_t* processor ) {
+    my_assert( processor, ASSERT_ERR_NULL_PTR );
+    
+    // MARK command does nothing in runtime - it's just a placeholder for labels
+    // Just increment instruction pointer to skip the label value
+    processor->instruction_ptr++;
+}
+
+void ProcLabel( Processor_t* processor ) {
+    my_assert( processor, ASSERT_ERR_NULL_PTR );
+    
+    // LABEL command does nothing in runtime - it's just a placeholder for labels
+    // Just increment instruction pointer to skip the label value
+    processor->instruction_ptr++;
+}

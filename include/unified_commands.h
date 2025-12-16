@@ -3,6 +3,13 @@
 
 #include "Compiler.h"
 
+// Define ON_PROC macro similar to ON_ASM
+#ifdef _PROC
+#define ON_PROC(...) __VA_ARGS__
+#else
+#define ON_PROC(...)
+#endif
+
 // Forward declaration to avoid circular dependency
 struct Processor_t;
 
@@ -28,9 +35,9 @@ struct Processor_t;
     macros(JA, ProcJump, LABEL) \
     macros(JBE, ProcJump, LABEL) \
     macros(JAE, ProcJump, LABEL) \
-    macros(HLT, NULL, VOID) \
-    macros(MARK, NULL, LABEL) \
-    macros(LABEL, NULL, VOID)
+    macros(HLT, ProcHlt, VOID) \
+    macros(MARK, ProcMark, LABEL) \
+    macros(LABEL, ProcLabel, VOID)
 
 // Enum for command codes
 enum CommandCode {

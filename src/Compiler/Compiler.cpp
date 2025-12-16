@@ -90,15 +90,21 @@ int SecondPass( Assembler_t* assembler, StrPar* strings ) {
             if ( StrCompare( instruction, commands[ idx ].command_name ) == 0 && argument.type == commands[ idx ].type_of_param ) {
                 assembler->byte_code[ assembler->instruction_cnt ] = commands[ idx ].command_number;
                 if ( assembler->byte_code[ assembler->instruction_cnt++ ] == HLT_CMD ) flag_HLT++;
-                if ( commands[ idx ].command_number == LABEL_CMD ) {
-                    
+                
+                if ( commands[ idx ].command_number == LABEL_CMD || commands[ idx ].command_number == MARK_CMD ) {
+                    // Handle label marking
+                    continue; // Skip adding argument for label commands
                 }
 
                 assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
+                break; // Found and processed the command, move to next instruction
             }
         }
 
+        free(instruction); // Free the allocated instruction string
     }
+    
+    return flag_HLT > 0 ? SUCCESS_RESULT : FAIL_RESULT;
 }
 
 // int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) { // FIXME SHIIIIT. VERY BAD. !!!!!!!!!!!!!!!!!!
@@ -333,6 +339,120 @@ void OutputInFile( Assembler_t* assembler ) {
     my_assert( !result_of_fclose, ASSERT_ERR_FAIL_CLOSE )
 }
 
+int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
+    my_assert( assembler, ASSERT_ERR_NULL_PTR );
+    my_assert( strings,   ASSERT_ERR_NULL_PTR );
+
+    assembler->instruction_cnt = 0;
+
+    char* instruction = NULL;
+    ArgumentStat argument = {};
+
+    int number_of_params = 0;
+    int number_of_characters_read = 0;
+    const char* str_pointer = 0;
+    int flag_HLT = 0;
+
+    for ( size_t i = 0; i < assembler->asm_file.nLines; i++ ) {
+        str_pointer = strings[i].ptr;
+        
+        // Check if the line starts with a label marker ':'
+        if (str_pointer[0] == ':') {
+            // Process label
+            char label_char = str_pointer[1];
+            if (label_char >= '0' && label_char <= '9') {
+                int label_idx = label_char - '0';
+                assembler->labels[label_idx].instruction_ptr = (int)assembler->instruction_cnt;
+                
+                PRINT(COLOR_BRIGHT_GREEN "%-10s\\n", strings[i].ptr);
+                continue; // Move to next line
+            } else {
+                fprintf(stderr, "Incorrect label format in file: %s:%lu\\n", assembler->asm_file.address, i + 1);
+                return FAIL_RESULT;
+            }
+        }
+        
+        number_of_params = sscanf(str_pointer, "%ms%n", &instruction, &number_of_characters_read);
+        if (number_of_params == 0) continue;
+
+        str_pointer += number_of_characters_read;
+        ArgumentProcessing(assembler, &argument, str_pointer);
+
+        bool command_found = false;
+        for (size_t idx = 0; idx < number_of_commands; idx++) {
+            if (StrCompare(instruction, commands[idx].command_name) == 0) {
+                command_found = true;
+                
+                // Special handling for MARK command (which represents labels)
+                if (commands[idx].command_number == MARK_CMD) {
+                    if (argument.type == MARK) {
+                        assembler->labels[argument.value].instruction_ptr = (int)assembler->instruction_cnt;
+                        
+                        PRINT(COLOR_BRIGHT_GREEN "%-10s\\n", strings[i].ptr);
+                        break; // Continue to next line
+                    } else {
+                        fprintf(stderr, "Incorrect mark in file: %s:%lu\\n", assembler->asm_file.address, i + 1);
+                        free(instruction);
+                        return FAIL_RESULT;
+                    }
+                }
+                
+                // Process arguments based on command type
+                if (commands[idx].type_of_param != VOID && argument.type != commands[idx].type_of_param) {
+                    fprintf(stderr, COLOR_BRIGHT_RED "Incorrect argument type for %s in file: %s:%lu \\n", 
+                            instruction, assembler->asm_file.address, i + 1);
+                    free(instruction);
+                    return FAIL_RESULT;
+                }
+
+                assembler->byte_code[assembler->instruction_cnt++] = commands[idx].command_number;
+
+                // Handle special cases for commands that need argument processing
+                if (commands[idx].type_of_param != VOID) {
+                    if (commands[idx].type_of_param == LABEL && argument.type == MARK) {
+                        // For jump commands with label arguments
+                        assembler->byte_code[assembler->instruction_cnt++] = assembler->labels[argument.value].instruction_ptr;
+                    } else {
+                        // Regular argument handling
+                        assembler->byte_code[assembler->instruction_cnt++] = argument.value;
+                    }
+                }
+
+                // Check if it's HLT command
+                if (commands[idx].command_number == HLT_CMD) {
+                    flag_HLT++;
+                }
+
+                // Print debug info
+                if (commands[idx].type_of_param != VOID) {
+                    PRINT(COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \\n", strings[i].ptr, 
+                          assembler->byte_code[assembler->instruction_cnt - 2],
+                          assembler->byte_code[assembler->instruction_cnt - 1]);
+                } else {
+                    PRINT(COLOR_BRIGHT_GREEN "%-10s --- %-2d \\n", strings[i].ptr, 
+                          assembler->byte_code[assembler->instruction_cnt - 1]);
+                }
+
+                break; // Command processed, move to next line
+            }
+        }
+
+        if (!command_found) {
+            fprintf(stderr, COLOR_BRIGHT_RED "Unknown command \"%s\" in file: %s:%lu \\n", 
+                    instruction, assembler->asm_file.address, i + 1);
+            free(instruction);
+            return FAIL_RESULT;
+        }
+
+        free(instruction); // Free the allocated instruction string
+    }
+
+    if (flag_HLT) return SUCCESS_RESULT;
+
+    fprintf(stderr, COLOR_BRIGHT_RED "There is no HLT command \\n" COLOR_RESET);
+    return FAIL_RESULT;
+}
+
 int ArgumentProcessing( Assembler_t* assembler, ArgumentStat* argument, const char* string ) {
     my_assert( argument, ASSERT_ERR_NULL_PTR );
     my_assert( string,   ASSERT_ERR_NULL_PTR );
@@ -382,14 +502,7 @@ int ArgumentProcessing( Assembler_t* assembler, ArgumentStat* argument, const ch
     return argument->value;
 }
 
-int IsArgumentANumber( const char* string ) {
-    int number_of_elements_read = sscanf( string, "%d", &( argument->value ) );
-    if ( number_of_elements_read == 1 ) {
-        argument->type = NUMBER;
 
-        return argument->value;
-    }
-}
 
 
 

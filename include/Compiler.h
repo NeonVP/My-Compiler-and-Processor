@@ -31,7 +31,8 @@ enum Argument_t {
     VOID     = 0,
     NUMBER   = 1,
     REGISTER = 2,
-    LABEL    = 3
+    LABEL    = 3,
+    MARK     = 4
 };
 
 struct ArgumentStat {
@@ -42,6 +43,12 @@ struct ArgumentStat {
 struct LabelStat {
     char* label_name;
     int   instruction_ptr;
+    
+    // Add assignment operator for int to support initialization with -1
+    LabelStat& operator=(int val) {
+        instruction_ptr = val;
+        return *this;
+    }
 };
 
 struct Assembler_t {

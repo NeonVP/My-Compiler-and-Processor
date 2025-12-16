@@ -26,6 +26,7 @@ struct Processor_t {
     size_t      instruction_ptr;
     size_t      instruction_count;
     StackData_t regs[ REGS_NUMBER ];
+    bool        is_running;
 };
 
 // Include unified commands after Processor_t is defined
@@ -67,5 +68,9 @@ void ProcJump( Processor_t* processor );
 
 void ProcCall( Processor_t* processor );
 void ProcRet ( Processor_t* processor );
+
+void ProcHlt  ( Processor_t* processor );
+void ProcMark ( Processor_t* processor );
+void ProcLabel( Processor_t* processor );
 
 #endif // PROCESSOR_H
