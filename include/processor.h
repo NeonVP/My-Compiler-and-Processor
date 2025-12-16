@@ -4,7 +4,6 @@
 #include "FileRWUtils.h"
 #include "stack.h"
 
-
 const int REGS_NUMBER = 8;
 
 #ifdef _PROC
@@ -28,6 +27,9 @@ struct Processor_t {
     size_t      instruction_count;
     StackData_t regs[ REGS_NUMBER ];
 };
+
+// Include unified commands after Processor_t is defined
+#include "unified_commands.h"
 
 void ProcCtor( Processor_t* processor, size_t stack_size, size_t refund_stack_size );
 void ProcDtor( Processor_t* processor );

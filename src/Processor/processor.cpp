@@ -95,7 +95,7 @@ void ExeFileToByteCode( Processor_t* processor, FileStat* file ) {
 
     FillInByteCode( processor, buffer );
 
-    fprintf( stderr, '\n' );
+    fprintf( stderr, "\n" );
 
     free( old_buffer_ptr );
 
