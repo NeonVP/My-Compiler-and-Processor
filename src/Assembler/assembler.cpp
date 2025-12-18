@@ -161,6 +161,29 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 
                 break;
 
+            case PUSHM_CMD:
+            case POPM_CMD:
+                assembler->byte_code[ assembler->instruction_cnt++ ] = command;
+
+                switch ( argument.type ) {
+                    case REGISTER:
+                        assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
+                        break;
+
+                    case VOID:
+                    case UNKNOWN:
+                    case NUMBER:
+                    case MARK:
+                    default:
+                        fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for %s in file: %s:%lu \n", 
+                                 (command == PUSHM_CMD) ? "PUSHM" : "POPM", assembler->asm_file.address, i + 1 );
+                        return FAIL_RESULT;
+                }
+
+                PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 2 ],
+                                                                                  assembler->byte_code[ assembler->instruction_cnt - 1 ] );
+                break;
+
             case ADD_CMD:
             case SUB_CMD:
             case MUL_CMD:
@@ -255,7 +278,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 int AsmCodeProcessing( char* instruction ) {
     my_assert( instruction, ASSERT_ERR_NULL_PTR );
 
-    if ( instruction[0] == ':' )                  { return MARK_CMD; }
+    if ( instruction[0] == ':' )                   { return MARK_CMD; }
 
     if ( StrCompare( instruction, "PUSH" ) == 0 ) { return PUSH_CMD; }
     if ( StrCompare( instruction, "POP"  ) == 0 ) { return POP_CMD;  }
@@ -276,6 +299,9 @@ int AsmCodeProcessing( char* instruction ) {
     if ( StrCompare( instruction, "JA"   ) == 0 ) { return JA_CMD;   }
     if ( StrCompare( instruction, "JBE"  ) == 0 ) { return JBE_CMD;  }
     if ( StrCompare( instruction, "JAE"  ) == 0 ) { return JAE_CMD;  }
+
+    if ( StrCompare( instruction, "PUSHM" ) == 0 ) { return PUSHM_CMD; }
+    if ( StrCompare( instruction, "POPM" ) == 0 ) { return POPM_CMD; }
 
     if ( StrCompare( instruction, "HLT"  ) == 0 ) { return HLT_CMD;  }
 
