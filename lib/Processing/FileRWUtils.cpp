@@ -4,7 +4,6 @@ void ArgvProcessing( int argc, char** argv, ON_ASM( FileStat* asm_file, ) FileSt
             my_assert( argv,             ASSERT_ERR_NULL_PTR        )
     ON_ASM( my_assert( asm_file,         ASSERT_ERR_NULL_PTR        ) )
             my_assert( exe_file,         ASSERT_ERR_NULL_PTR        )
-            my_assert( isfinite( argc ), ASSERT_ERR_INFINITE_NUMBER )
 
     PRINT( COLOR_BRIGHT_YELLOW "In %s \n", __func__ )
 

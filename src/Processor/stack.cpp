@@ -175,7 +175,7 @@ void ErrorProcessing( long err_code ) {
 }
 
 
-void StackDump( Stack_t* stk ) {
+void StackDump( const Stack_t* stk ) {
     if ( stk == NULL ) {
         printerr( "Error in DUMP: Null Pointer on stack STRUCT\n" );
     }

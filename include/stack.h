@@ -90,7 +90,7 @@ void StackRealloc( Stack_t* stk, size_t capacity );
 void StackToPoison( Stack_t* stk );
 
 long StackVerify( Stack_t* stk );
-void StackDump  ( Stack_t* stk );
+void StackDump  ( const Stack_t* stk );
 void ErrorProcessing( long err_code );
 
 #endif //STACK_H

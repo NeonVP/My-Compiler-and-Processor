@@ -12,7 +12,6 @@ ON_DEBUG( void PrintLabels( int labels[ LABELS_NUMBER ] ); )
 
 void AssemblerCtor( Assembler_t* assembler, int argc, char** argv ) {
     my_assert( assembler,        ASSERT_ERR_NULL_PTR        );
-    my_assert( isfinite( argc ), ASSERT_ERR_INFINITE_NUMBER );
     my_assert( argv,             ASSERT_ERR_NULL_PTR        );
 
     ArgvProcessing( argc, argv, &( assembler->asm_file ), &( assembler->exe_file ) );
@@ -94,7 +93,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
             case MARK_CMD:
                 ArgumentProcessing( &argument, instruction );
 
-                if ( argument.type == MARK ) {
+                if ( argument.type == LABEL ) {
                     assembler->labels[ argument.value ] = ( int ) assembler->instruction_cnt;
 
                     PRINT( COLOR_BRIGHT_GREEN "%-10s\n", strings[i].ptr );
@@ -120,7 +119,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 
                     case VOID:
                     case UNKNOWN:
-                    case MARK:
+                    case LABEL:
                     default:
                         fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for PUSH in file: %s:%lu \n", assembler->asm_file.address, i + 1 );
                         return FAIL_RESULT;
@@ -145,7 +144,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 
                     case UNKNOWN:
                     case NUMBER:
-                    case MARK:
+                    case LABEL:
                     default:
                         fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for POP in file: %s:%lu \n", assembler->asm_file.address, i + 1 );
                         return FAIL_RESULT;
@@ -173,7 +172,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                     case VOID:
                     case UNKNOWN:
                     case NUMBER:
-                    case MARK:
+                    case LABEL:
                     default:
                         fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for %s in file: %s:%lu \n", 
                                  (command == PUSHM_CMD) ? "PUSHM" : "POPM", assembler->asm_file.address, i + 1 );
@@ -211,7 +210,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 switch ( argument.type ) {
-                    case MARK:
+                    case LABEL:
                         assembler->byte_code[ assembler->instruction_cnt++ ] = assembler->labels[ argument.value ];
                         break;
 
@@ -232,7 +231,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 switch ( argument.type ) {
-                    case MARK:
+                    case LABEL:
                         assembler->byte_code[ assembler->instruction_cnt++ ] = assembler->labels[ argument.value ];
                         break;
 
@@ -346,7 +345,7 @@ int ArgumentProcessing( Argument* argument, const char* string ) {
             argument->value = instruction[1] - '0';
 
             if ( argument->value >= 0 && argument->value < 10 ) {
-                argument->type = MARK;
+                argument->type = LABEL;
 
                 return argument->value;
             }
