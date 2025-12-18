@@ -82,11 +82,25 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 
     for ( size_t i = 0; i < assembler->asm_file.nLines; i++ ) {
         str_pointer = strings[i].ptr;
+        
+        // \u041f\u0440\u043e\u043f\u0443\u0441\u043a\u0430\u0435\u043c \u043f\u0443\u0441\u0442\u044b\u0435 \u0441\u0442\u0440\u043e\u043a\u0438 \u0438 \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0438
+        if ( str_pointer[0] == ';' ) continue;  // \u041a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0439 \u0432\u044b (\u0441\u0442\u0440\u043e\u043a\u0430 \u043d\u0430\u0447\u0438\u043d\u0430\u0435\u0442\u0441\u044f \u0441 ;)
+        
         number_of_params = sscanf( str_pointer, "%s%n", instruction, &number_of_characters_read );
         if ( number_of_params == 0 ) continue;
+        
+        // \u041e\u0431\u0440\u0435\u0437\u0430\u0435\u043c \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u0439, \u043a\u043e\u0442\u043e\u0440\u044b\u0435 \u043d\u0430\u0447\u0438\u043d\u0430\u044e\u0442\u0441\u044f \u043d\u0430 \u043f\u0440\u0438 \u0447\u0442\u0435\u043d\u0438\u0438 \u043f\u0435\u0440\u0432\u043e\u0433\u043e \u0442\u043e\u043a\u0435\u043d\u0430
+        if ( instruction[0] == ';' ) continue;
 
         str_pointer += number_of_characters_read;
         command = AsmCodeProcessing( instruction );
+        
+        // \u041e\u0431\u0440\u0435\u0437\u0430\u0435\u043c \u0441\u0442\u0440\u043e\u043a\u0443 \u0432\u043e \u0432\u0441\u044e \u0434\u043b\u0438\u043d\u0443 \u0434\u043e \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u044f
+        char* comment_ptr = strchr( (char*)str_pointer, ';' );
+        if ( comment_ptr ) {
+            *comment_ptr = '\0';  // \u041e\u0431\u0440\u0435\u0437\u0430\u0435\u043c \u0441\u0442\u0440\u043e\u043a\u0443 \u043f\u043e \u043a\u043e\u043c\u043c\u0435\u043d\u0442\u0430\u0440\u0438\u044e
+        }
+        
         ArgumentProcessing( &argument, str_pointer );
 
         switch ( command ) {
@@ -105,7 +119,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                 }
 
             case PUSH_CMD:
-                // PUSH <число>
+                // PUSH <\u0447\u0438\u0441\u043b\u043e>
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type == NUMBER ) {
@@ -118,7 +132,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                 break;
 
             case PUSHR_CMD:
-                // PUSHR <регистр>
+                // PUSHR <\u0440\u0435\u0433\u0438\u0441\u0442\u0440>
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type == REGISTER ) {
@@ -131,7 +145,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                 break;
 
             case POP_CMD:
-                // POP (без аргументов)
+                // POP (\u0431\u0435\u0437 \u0430\u0440\u0433\u0443\u043c\u0435\u043d\u0442\u043e\u0432)
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type != VOID ) {
@@ -142,7 +156,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                 break;
 
             case POPR_CMD:
-                // POPR <регистр>
+                // POPR <\u0440\u0435\u0433\u0438\u0441\u0442\u0440>
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type == REGISTER ) {
