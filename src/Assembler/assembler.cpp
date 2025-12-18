@@ -142,7 +142,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
         command = AsmCodeProcessing( instruction );
         
         // Обрезаем комментарии
-        char* comment_ptr = strchr( (char*)str_pointer, ';' );
+        char* comment_ptr = strchr( str_pointer, ';' );
         if ( comment_ptr ) {
             *comment_ptr = '\0';
         }
@@ -150,7 +150,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
         ArgumentProcessing( &argument, str_pointer );
 
         switch ( command ) {
-            case MARK_CMD:
+            case MARK_CMD: {
                 // Парсим название метки (:label_name или :0)
                 strncpy( label_name, instruction + 1, MAX_LABEL_LEN - 1 );
                 label_name[MAX_LABEL_LEN - 1] = '\0';
@@ -162,8 +162,9 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                     return FAIL_RESULT;
                 }
                 break;
+            }
 
-            case PUSH_CMD:
+            case PUSH_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type == NUMBER ) {
@@ -174,8 +175,9 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                     return FAIL_RESULT;
                 }
                 break;
+            }
 
-            case PUSHR_CMD:
+            case PUSHR_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type == REGISTER ) {
@@ -186,8 +188,9 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                     return FAIL_RESULT;
                 }
                 break;
+            }
 
-            case POP_CMD:
+            case POP_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type != VOID ) {
@@ -196,8 +199,9 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                 }
                 PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d \n", strings[i].ptr, command );
                 break;
+            }
 
-            case POPR_CMD:
+            case POPR_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type == REGISTER ) {
@@ -208,9 +212,10 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                     return FAIL_RESULT;
                 }
                 break;
+            }
 
             case PUSHM_CMD:
-            case POPM_CMD:
+            case POPM_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type == REGISTER ) {
@@ -225,6 +230,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                     return FAIL_RESULT;
                 }
                 break;
+            }
 
             case ADD_CMD:
             case SUB_CMD:
@@ -233,7 +239,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
             case POW_CMD:
             case SQRT_CMD:
             case IN_CMD:
-            case OUT_CMD:
+            case OUT_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type != VOID ) {
@@ -243,13 +249,14 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 
                 PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d \n", strings[i].ptr, command );
                 break;
+            }
 
             case JMP_CMD:
             case JE_CMD:
             case JB_CMD:
             case JA_CMD:
             case JBE_CMD:
-            case JAE_CMD:
+            case JAE_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 // Парсим название метки - может быть :0, :1, :label_name и т.д.
@@ -280,8 +287,9 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                     return FAIL_RESULT;
                 }
                 break;
+            }
 
-            case CALL_CMD:
+            case CALL_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 // Парсим название метки для CALL
@@ -311,24 +319,27 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                     return FAIL_RESULT;
                 }
                 break;
+            }
 
-            case RET_CMD:
+            case RET_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 1 ] );
                 break;
+            }
 
-            case HLT_CMD:
+            case HLT_CMD: {
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
                 HLT_flag++;
 
                 PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 1 ] );
                 break;
+            }
 
-            default:
+            default: {
                 fprintf( stderr, COLOR_BRIGHT_RED "Incorrect command \"%s\" in file: %s:%lu \n", strings[i].ptr, assembler->asm_file.address, i + 1 );
-
                 return FAIL_RESULT;
+            }
         }
     }
 
