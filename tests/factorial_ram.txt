@@ -9,61 +9,61 @@
 ; Ввод числа
 IN
 PUSH 0          ; индекс RAM для числа
-POPR AX
-POPM [AX]       ; RAM[0] = n (число из ввода)
+POPR RAX
+POPM [RAX]      ; RAM[0] = n (число из ввода)
 
 ; Инициализация результата = 1
 PUSH 1
 PUSH 1          ; индекс RAM для результата
-POPR BX
-POPM [BX]       ; RAM[1] = 1
+POPR RBX
+POPM [RBX]      ; RAM[1] = 1
 
 ; Инициализация счетчика = 2
 PUSH 2
 PUSH 2          ; индекс RAM для счетчика
-POPR CX
-POPM [CX]       ; RAM[2] = 2
+POPR RCX
+POPM [RCX]      ; RAM[2] = 2
 
 ; Основной цикл
 :0              ; начало цикла
 ; Проверка условия: если счетчик > n, выход из цикла
 PUSH 2          ; индекс счетчика
-POPR CX
-PUSHM [CX]      ; стек: [счетчик]
+POPR RCX
+PUSHM [RCX]     ; стек: [счетчик]
 
 PUSH 0          ; индекс n
-POPR AX
-PUSHM [AX]      ; стек: [счетчик, n]
+POPR RAX
+PUSHM [RAX]     ; стек: [счетчик, n]
 
 JA :1           ; если счетчик > n, перейти к выводу результата
 
 ; Умножение результата на счетчик
 ; result *= counter
 PUSH 1          ; индекс результата
-POPR BX
-PUSHM [BX]      ; стек: [result]
+POPR RBX
+PUSHM [RBX]     ; стек: [result]
 
 PUSH 2          ; индекс счетчика
-POPR CX
-PUSHM [CX]      ; стек: [result, counter]
+POPR RCX
+PUSHM [RCX]     ; стек: [result, counter]
 
 MUL             ; стек: [result * counter]
 
 PUSH 1          ; индекс результата
-POPR BX
-POPM [BX]       ; RAM[1] = result * counter
+POPR RBX
+POPM [RBX]      ; RAM[1] = result * counter
 
 ; Увеличение счетчика на 1
 PUSH 2          ; индекс счетчика
-POPR CX
-PUSHM [CX]      ; стек: [counter]
+POPR RCX
+PUSHM [RCX]     ; стек: [counter]
 
 PUSH 1
 ADD             ; стек: [counter + 1]
 
 PUSH 2          ; индекс счетчика
-POPR CX
-POPM [CX]       ; RAM[2] = counter + 1
+POPR RCX
+POPM [RCX]      ; RAM[2] = counter + 1
 
 ; Переход в начало цикла
 JMP :0
@@ -71,8 +71,8 @@ JMP :0
 ; Вывод результата
 :1
 PUSH 1          ; индекс результата
-POPR BX
-PUSHM [BX]      ; кладем результат в стек
+POPR RBX
+PUSHM [RBX]     ; кладем результат в стек
 OUT             ; выводим результат
 
 HLT
