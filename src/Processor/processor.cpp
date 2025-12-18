@@ -6,6 +6,15 @@ void ProcCtor( Processor_t* processor, size_t stack_size, size_t refund_stack_si
 
     StackCtor( &( processor->stk ), stack_size );
     StackCtor( &( processor->refund_stk ), refund_stack_size );
+    
+    // Инициализируем оперативную память (RAM)
+    processor->RAM = (int*) calloc( RAM_SIZE, sizeof(int) );
+    assert( processor->RAM && "RAM memory allocation error" );
+    
+    // Инициализируем RAM нулями (calloc уже делает это, но для явности)
+    for ( int i = 0; i < RAM_SIZE; i++ ) {
+        processor->RAM[i] = 0;
+    }
 }
 
 void ProcDtor( Processor_t* processor ) {
@@ -15,6 +24,10 @@ void ProcDtor( Processor_t* processor ) {
     StackDtor( &( processor->refund_stk ) );
     free( processor->byte_code );
     processor->byte_code = NULL;
+    
+    // Освобождаем оперативную память
+    free( processor->RAM );
+    processor->RAM = NULL;
 }
 
 // ProcessorStatus_t ProcVerify( Processor_t* processor ) {                // TODO: add Verify!!!
@@ -31,6 +44,7 @@ ProcessorStatus_t ProcDump( const Processor_t* processor, const int error ) {
 
     PrintByteCodeInline( processor );
     PrintRegisters( processor );
+    PrintRAM( processor );
 
     PRINT( COLOR_GREEN "\nMain Stack:\n" );
     ON_DEBUG( StackDump( &( processor->stk ) ); )
@@ -73,6 +87,20 @@ void PrintRegisters( const Processor_t* processor ) {
     }
 
     if ( REGS_NUMBER % 5 != 0 ) PRINT( "\n" );
+}
+
+void PrintRAM( const Processor_t* processor ) {
+    my_assert( processor, ASSERT_ERR_NULL_PTR );
+
+    PRINT( COLOR_BRIGHT_GREEN "\nRAM (first 20 elements):\n" );
+
+    for ( int i = 0; i < 20 && i < RAM_SIZE; i++ ) {
+        PRINT( " RAM[%2d] = %5d  ", i, processor->RAM[i] );
+
+        if ( ( i + 1 ) % 5 == 0 ) PRINT( "\n" );
+    }
+
+    if ( 20 % 5 != 0 ) PRINT( "\n" );
 }
 #endif
 
@@ -143,6 +171,8 @@ int ByteCodeProcessing( Processor_t* processor ) {
             case OUT_CMD:   ProcOut  ( processor ); break;
             case PUSHR_CMD: ProcPushR( processor ); break;
             case POPR_CMD:  ProcPopR ( processor ); break;
+            case PUSHM_CMD: ProcPushM( processor ); break;
+            case POPM_CMD:  ProcPopM ( processor ); break;
 
             case CALL_CMD:  ProcCall ( processor ); break;
             case RET_CMD:   ProcRet  ( processor ); break;
