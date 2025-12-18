@@ -172,13 +172,20 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
             case POPM_CMD:
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
-                // Для PUSHM/POPM нужно распарсить формат [REGISTER]
+                // PUSHM/POPM может быть:
+                // 1. [REGISTER] - доступ через регистр
+                // 2. NUMBER - прямой адрес в RAM
                 if ( argument.type == REGISTER ) {
+                    // Через регистр [AX], [BX] и т.д.
                     assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
-                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 2 ],
-                                                                                      assembler->byte_code[ assembler->instruction_cnt - 1 ] );
+                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d (via register)\n", strings[i].ptr, command, argument.value );
+                } else if ( argument.type == NUMBER ) {
+                    // Прямой адрес в RAM: POPM 5, PUSHM 10 и т.д.
+                    // Добавляем 100 к номеру, чтобы процессор отличил от регистра
+                    assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value + 100;
+                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d (direct address)\n", strings[i].ptr, command, argument.value + 100 );
                 } else {
-                    fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for %s in file: %s:%lu (expected [REGISTER])\n", 
+                    fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for %s in file: %s:%lu (expected [REGISTER] or NUMBER)\n", 
                              (command == PUSHM_CMD) ? "PUSHM" : "POPM", assembler->asm_file.address, i + 1 );
                     return FAIL_RESULT;
                 }
