@@ -23,7 +23,9 @@ enum ASM_CMD {
     RET_CMD   = 29,
     MARK_CMD  = 30,
     PUSHR_CMD = 33,
-    POPR_CMD  = 34
+    POPR_CMD  = 34,
+    PUSHM_CMD = 35,  // Цитирование из RAM по адресу в регистре
+    POPM_CMD  = 36   // Запись в RAM по адресу в регистре
 };
 
 // struct Commands_t {
