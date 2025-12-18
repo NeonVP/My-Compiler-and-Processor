@@ -117,6 +117,51 @@ void ProcPopR( Processor_t* processor ) {
     StackPop( &( processor->stk ) );
 }
 
+void ProcPushM( Processor_t* processor ) {
+    my_assert( processor, ASSERT_ERR_NULL_PTR );
+    my_assert( processor->RAM, ASSERT_ERR_NULL_PTR );
+
+    // PUSHM [register]
+    // Вытаскиваем значение из RAM по индексу из регистра
+    // байт-код: [PUSHM_CMD, reg_index]
+    int reg_index = processor->byte_code[ processor->instruction_ptr++ ];
+    
+    assert( reg_index >= 0 && reg_index < REGS_NUMBER );
+    
+    int ram_index = processor->regs[reg_index];
+    
+    if ( ram_index < 0 || ram_index >= RAM_SIZE ) {
+        fprintf( stderr, COLOR_RED "RAM index out of bounds: %d" COLOR_RESET "\n", ram_index );
+        assert( 0 && "RAM access violation" );
+    }
+    
+    StackPush( &( processor->stk ), processor->RAM[ram_index] );
+}
+
+void ProcPopM( Processor_t* processor ) {
+    my_assert( processor, ASSERT_ERR_NULL_PTR );
+    my_assert( processor->RAM, ASSERT_ERR_NULL_PTR );
+
+    // POPM [register]
+    // Кладем значение из стека в RAM по индексу из регистра
+    // байт-код: [POPM_CMD, reg_index]
+    int reg_index = processor->byte_code[ processor->instruction_ptr++ ];
+    
+    assert( reg_index >= 0 && reg_index < REGS_NUMBER );
+    
+    int ram_index = processor->regs[reg_index];
+    
+    if ( ram_index < 0 || ram_index >= RAM_SIZE ) {
+        fprintf( stderr, COLOR_RED "RAM index out of bounds: %d" COLOR_RESET "\n", ram_index );
+        assert( 0 && "RAM access violation" );
+    }
+    
+    int value = StackTop( &( processor->stk ) );
+    StackPop( &( processor->stk ) );
+    
+    processor->RAM[ram_index] = value;
+}
+
 void ProcJump( Processor_t* processor ) {
     my_assert( processor, ASSERT_ERR_NULL_PTR );
 
