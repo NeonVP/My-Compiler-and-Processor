@@ -141,10 +141,14 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
         str_pointer += number_of_characters_read;
         command = AsmCodeProcessing( instruction );
         
-        // Обрезаем комментарии
-        char* comment_ptr = strchr( str_pointer, ';' );
-        if ( comment_ptr ) {
-            *comment_ptr = '\0';
+        // Обрезаем комментарии - ищем в (char*) версии
+        const char* comment_pos = strchr( str_pointer, ';' );
+        if ( comment_pos ) {
+            // Создаем локальную копию для обрезки
+            char temp_str[256] = "";
+            strncpy( temp_str, str_pointer, comment_pos - str_pointer );
+            temp_str[comment_pos - str_pointer] = '\0';
+            str_pointer = temp_str;  // Используем обрезанную версию
         }
         
         ArgumentProcessing( &argument, str_pointer );
