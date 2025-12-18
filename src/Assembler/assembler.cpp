@@ -172,23 +172,16 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
             case POPM_CMD:
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
-                switch ( argument.type ) {
-                    case REGISTER:
-                        assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
-                        break;
-
-                    case VOID:
-                    case UNKNOWN:
-                    case NUMBER:
-                    case LABEL:
-                    default:
-                        fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for %s in file: %s:%lu \n", 
-                                 (command == PUSHM_CMD) ? "PUSHM" : "POPM", assembler->asm_file.address, i + 1 );
-                        return FAIL_RESULT;
+                // Для PUSHM/POPM нужно распарсить формат [REGISTER]
+                if ( argument.type == REGISTER ) {
+                    assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
+                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 2 ],
+                                                                                      assembler->byte_code[ assembler->instruction_cnt - 1 ] );
+                } else {
+                    fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for %s in file: %s:%lu (expected [REGISTER])\n", 
+                             (command == PUSHM_CMD) ? "PUSHM" : "POPM", assembler->asm_file.address, i + 1 );
+                    return FAIL_RESULT;
                 }
-
-                PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 2 ],
-                                                                                  assembler->byte_code[ assembler->instruction_cnt - 1 ] );
                 break;
 
             case ADD_CMD:
@@ -365,6 +358,32 @@ int ArgumentProcessing( Argument* argument, const char* string ) {
             if ( argument->value >= 0 && argument->value < 10 ) {
                 argument->type = LABEL;
                 return argument->value;
+            }
+        }
+
+        // Проверяем формат [REGISTER] для PUSHM/POPM
+        if ( instruction[0] == '[' && instruction[strlen(instruction)-1] == ']' ) {
+            // Копируем регистр без скобок
+            char reg[32] = "";
+            strncpy( reg, instruction + 1, strlen(instruction) - 2 );
+            reg[strlen(instruction) - 2] = '\0';
+            
+            // Проверяем регистры формата RXX
+            if ( strlen( reg ) == 3 && reg[0] == 'R' && reg[2] == 'X' ) {
+                argument->value = reg[1] - 'A' + 1;
+                if ( argument->value >= 1 && argument->value <= 26 ) {
+                    argument->type = REGISTER;
+                    return argument->value;
+                }
+            }
+            
+            // Проверяем регистры формата XX
+            if ( strlen( reg ) == 2 && reg[1] == 'X' && isalpha( reg[0] ) ) {
+                argument->value = reg[0] - 'A' + 1;
+                if ( argument->value >= 1 && argument->value <= 26 ) {
+                    argument->type = REGISTER;
+                    return argument->value;
+                }
             }
         }
 
