@@ -105,59 +105,53 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
                 }
 
             case PUSH_CMD:
+                // PUSH <число>
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
-                switch ( argument.type ) {
-                    case NUMBER:
-                        assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
-                        break;
-
-                    case REGISTER:
-                        assembler->byte_code[ assembler->instruction_cnt - 1 ] += 32;
-                        assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
-                        break;
-
-                    case VOID:
-                    case UNKNOWN:
-                    case LABEL:
-                    default:
-                        fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for PUSH in file: %s:%lu \n", assembler->asm_file.address, i + 1 );
-                        return FAIL_RESULT;
+                if ( argument.type == NUMBER ) {
+                    assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
+                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, command, argument.value );
+                } else {
+                    fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for PUSH in file: %s:%lu (expected NUMBER)\n", assembler->asm_file.address, i + 1 );
+                    return FAIL_RESULT;
                 }
+                break;
 
-                PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 2 ],
-                                                                                  assembler->byte_code[ assembler->instruction_cnt - 1 ] );
+            case PUSHR_CMD:
+                // PUSHR <регистр>
+                assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
+                if ( argument.type == REGISTER ) {
+                    assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
+                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, command, argument.value );
+                } else {
+                    fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for PUSHR in file: %s:%lu (expected REGISTER)\n", assembler->asm_file.address, i + 1 );
+                    return FAIL_RESULT;
+                }
                 break;
 
             case POP_CMD:
+                // POP (без аргументов)
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
-                switch ( argument.type ) {
-                    case REGISTER:
-                        assembler->byte_code[ assembler->instruction_cnt - 1 ] += 32;
-                        assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
-                        break;
-
-                    case VOID:
-                        break;
-
-                    case UNKNOWN:
-                    case NUMBER:
-                    case LABEL:
-                    default:
-                        fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for POP in file: %s:%lu \n", assembler->asm_file.address, i + 1 );
-                        return FAIL_RESULT;
+                if ( argument.type != VOID ) {
+                    fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for POP in file: %s:%lu (expected no arguments)\n", assembler->asm_file.address, i + 1 );
+                    return FAIL_RESULT;
                 }
+                PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d \n", strings[i].ptr, command );
+                break;
+
+            case POPR_CMD:
+                // POPR <регистр>
+                assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
                 if ( argument.type == REGISTER ) {
-                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 2 ],
-                                                                                      assembler->byte_code[ assembler->instruction_cnt - 1 ] );
+                    assembler->byte_code[ assembler->instruction_cnt++ ] = argument.value;
+                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d %d \n", strings[i].ptr, command, argument.value );
+                } else {
+                    fprintf( stderr, COLOR_BRIGHT_RED "Incorrect argument for POPR in file: %s:%lu (expected REGISTER)\n", assembler->asm_file.address, i + 1 );
+                    return FAIL_RESULT;
                 }
-                else {
-                    PRINT( COLOR_BRIGHT_GREEN "%-10s --- %-2d \n", strings[i].ptr, assembler->byte_code[ assembler->instruction_cnt - 1 ] );
-                }
-
                 break;
 
             case PUSHM_CMD:
@@ -277,32 +271,34 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 int AsmCodeProcessing( char* instruction ) {
     my_assert( instruction, ASSERT_ERR_NULL_PTR );
 
-    if ( instruction[0] == ':' )                   { return MARK_CMD; }
+    if ( instruction[0] == ':' )                    { return MARK_CMD; }
 
-    if ( StrCompare( instruction, "PUSH" ) == 0 ) { return PUSH_CMD; }
-    if ( StrCompare( instruction, "POP"  ) == 0 ) { return POP_CMD;  }
-    if ( StrCompare( instruction, "ADD"  ) == 0 ) { return ADD_CMD;  }
-    if ( StrCompare( instruction, "SUB"  ) == 0 ) { return SUB_CMD;  }
-    if ( StrCompare( instruction, "MUL"  ) == 0 ) { return MUL_CMD;  }
-    if ( StrCompare( instruction, "DIV"  ) == 0 ) { return DIV_CMD;  }
-    if ( StrCompare( instruction, "POW"  ) == 0 ) { return POW_CMD;  }
-    if ( StrCompare( instruction, "SQRT" ) == 0 ) { return SQRT_CMD; }
-    if ( StrCompare( instruction, "IN"   ) == 0 ) { return IN_CMD;   }
-    if ( StrCompare( instruction, "OUT"  ) == 0 ) { return OUT_CMD;  }
-    if ( StrCompare( instruction, "CALL" ) == 0 ) { return CALL_CMD; }
-    if ( StrCompare( instruction, "RET"  ) == 0 ) { return RET_CMD;  }
+    if ( StrCompare( instruction, "PUSH" ) == 0 )  { return PUSH_CMD; }
+    if ( StrCompare( instruction, "PUSHR" ) == 0 ) { return PUSHR_CMD; }
+    if ( StrCompare( instruction, "POP"  ) == 0 )  { return POP_CMD;  }
+    if ( StrCompare( instruction, "POPR" ) == 0 )  { return POPR_CMD;  }
+    if ( StrCompare( instruction, "ADD"  ) == 0 )  { return ADD_CMD;  }
+    if ( StrCompare( instruction, "SUB"  ) == 0 )  { return SUB_CMD;  }
+    if ( StrCompare( instruction, "MUL"  ) == 0 )  { return MUL_CMD;  }
+    if ( StrCompare( instruction, "DIV"  ) == 0 )  { return DIV_CMD;  }
+    if ( StrCompare( instruction, "POW"  ) == 0 )  { return POW_CMD;  }
+    if ( StrCompare( instruction, "SQRT" ) == 0 )  { return SQRT_CMD; }
+    if ( StrCompare( instruction, "IN"   ) == 0 )  { return IN_CMD;   }
+    if ( StrCompare( instruction, "OUT"  ) == 0 )  { return OUT_CMD;  }
+    if ( StrCompare( instruction, "CALL" ) == 0 )  { return CALL_CMD; }
+    if ( StrCompare( instruction, "RET"  ) == 0 )  { return RET_CMD;  }
 
-    if ( StrCompare( instruction, "JMP"  ) == 0 ) { return JMP_CMD;  }
-    if ( StrCompare( instruction, "JE"   ) == 0 ) { return JE_CMD;   }
-    if ( StrCompare( instruction, "JB"   ) == 0 ) { return JB_CMD;   }
-    if ( StrCompare( instruction, "JA"   ) == 0 ) { return JA_CMD;   }
-    if ( StrCompare( instruction, "JBE"  ) == 0 ) { return JBE_CMD;  }
-    if ( StrCompare( instruction, "JAE"  ) == 0 ) { return JAE_CMD;  }
+    if ( StrCompare( instruction, "JMP"  ) == 0 )  { return JMP_CMD;  }
+    if ( StrCompare( instruction, "JE"   ) == 0 )  { return JE_CMD;   }
+    if ( StrCompare( instruction, "JB"   ) == 0 )  { return JB_CMD;   }
+    if ( StrCompare( instruction, "JA"   ) == 0 )  { return JA_CMD;   }
+    if ( StrCompare( instruction, "JBE"  ) == 0 )  { return JBE_CMD;  }
+    if ( StrCompare( instruction, "JAE"  ) == 0 )  { return JAE_CMD;  }
 
     if ( StrCompare( instruction, "PUSHM" ) == 0 ) { return PUSHM_CMD; }
-    if ( StrCompare( instruction, "POPM" ) == 0 ) { return POPM_CMD; }
+    if ( StrCompare( instruction, "POPM" ) == 0 )  { return POPM_CMD; }
 
-    if ( StrCompare( instruction, "HLT"  ) == 0 ) { return HLT_CMD;  }
+    if ( StrCompare( instruction, "HLT"  ) == 0 )  { return HLT_CMD;  }
 
     return FAIL_RESULT;
 }
