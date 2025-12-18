@@ -7,6 +7,7 @@
 #include "stack.h"
 
 const int REGS_NUMBER = 10;
+const int RAM_SIZE = 100;  // Оперативная память - 100 элементов
 
 enum ProcessorStatus_t {
     SUCCESS,
@@ -19,6 +20,7 @@ struct Processor_t {
     Stack_t stk                     = {};
     Stack_t refund_stk              = {};
     int* byte_code                  = NULL;
+    int* RAM                        = NULL;  // Оперативная память
     size_t instruction_ptr          = 0;
     size_t instruction_count        = 0;
     StackData_t regs[ REGS_NUMBER ] = {};
@@ -34,6 +36,7 @@ void ProcDtor( Processor_t* processor );
 
     void PrintByteCodeInline  ( const Processor_t* processor );
     void PrintRegisters       ( const Processor_t* processor );
+    void PrintRAM             ( const Processor_t* processor );
 #endif
 
 void ExeFileToByteCode ( Processor_t* processor, FileStat* file );
@@ -56,6 +59,9 @@ void ProcOut( Processor_t* processor );
 
 void ProcPushR( Processor_t* processor );
 void ProcPopR ( Processor_t* processor );
+
+void ProcPushM( Processor_t* processor );  // PUSHM [register]
+void ProcPopM ( Processor_t* processor );  // POPM [register]
 
 void ProcJump( Processor_t* processor );
 
