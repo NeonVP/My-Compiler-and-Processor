@@ -121,14 +121,22 @@ void ProcPushM( Processor_t* processor ) {
     my_assert( processor, ASSERT_ERR_NULL_PTR );
     my_assert( processor->RAM, ASSERT_ERR_NULL_PTR );
 
-    // PUSHM [register]
-    // Вытаскиваем значение из RAM по индексу из регистра
-    // байт-код: [PUSHM_CMD, reg_index]
+    // PUSHM [register] или PUSHM address
+    // Вытаскиваем значение из RAM по индексу из регистра или прямому адресу
+    // байт-код: [PUSHM_CMD, reg_index_or_address]
     int reg_index = processor->byte_code[ processor->instruction_ptr++ ];
     
-    assert( reg_index >= 0 && reg_index < REGS_NUMBER );
+    int ram_index;
     
-    int ram_index = processor->regs[reg_index];
+    // Если значение < 100, считаем что это регистр (0-3)
+    // Если >= 100, считаем что это прямой адрес в RAM
+    if ( reg_index < REGS_NUMBER ) {
+        // Используем регистр
+        ram_index = processor->regs[reg_index];
+    } else {
+        // Прямой адрес
+        ram_index = reg_index - 100;  // смещение для различения
+    }
     
     if ( ram_index < 0 || ram_index >= RAM_SIZE ) {
         fprintf( stderr, COLOR_RED "RAM index out of bounds: %d" COLOR_RESET "\n", ram_index );
@@ -142,14 +150,22 @@ void ProcPopM( Processor_t* processor ) {
     my_assert( processor, ASSERT_ERR_NULL_PTR );
     my_assert( processor->RAM, ASSERT_ERR_NULL_PTR );
 
-    // POPM [register]
-    // Кладем значение из стека в RAM по индексу из регистра
-    // байт-код: [POPM_CMD, reg_index]
+    // POPM [register] или POPM address
+    // Кладем значение из стека в RAM по индексу из регистра или прямому адресу
+    // байт-код: [POPM_CMD, reg_index_or_address]
     int reg_index = processor->byte_code[ processor->instruction_ptr++ ];
     
-    assert( reg_index >= 0 && reg_index < REGS_NUMBER );
+    int ram_index;
     
-    int ram_index = processor->regs[reg_index];
+    // Если значение < 100, считаем что это регистр (0-3)
+    // Если >= 100, считаем что это прямой адрес в RAM
+    if ( reg_index < REGS_NUMBER ) {
+        // Используем регистр
+        ram_index = processor->regs[reg_index];
+    } else {
+        // Прямой адрес (вычитаем 100 для получения реального адреса)
+        ram_index = reg_index - 100;
+    }
     
     if ( ram_index < 0 || ram_index >= RAM_SIZE ) {
         fprintf( stderr, COLOR_RED "RAM index out of bounds: %d" COLOR_RESET "\n", ram_index );
