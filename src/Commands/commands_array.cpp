@@ -6,6 +6,3 @@ const CommandStat commands[] = {
     INIT_COMMANDS(CMD_ENTRY)
     #undef CMD_ENTRY
 };
-
-// Define the number of commands
-const int number_of_commands = sizeof(commands) / sizeof(commands[0]);
