@@ -52,6 +52,8 @@ struct CommandStat {
     const char* command_name;
     #ifdef _PROC
         void (*function_pointer)(Processor_t* processor);
+    #else
+        void* function_pointer; // Placeholder for _ASM mode to keep structure compatible
     #endif
     Argument_t type_of_param;
 };
@@ -63,8 +65,12 @@ extern const CommandStat commands[];
 #define COMMAND_ENTRY(cmd_name, cmd_func, cmd_param) { \
     cmd_name##_CMD, \
     #cmd_name, \
-    ON_PROC(cmd_func,) \
+    ON_PROC(cmd_func,) (void*)0, \
     cmd_param \
 }
+
+// Define number of commands using macro expansion
+#define COUNT_COMMANDS(name, func, param) +1
+#define NUMBER_OF_COMMANDS (0 INIT_COMMANDS(COUNT_COMMANDS))
 
 #endif // UNIFIED_COMMANDS_H
