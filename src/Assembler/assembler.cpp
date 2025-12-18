@@ -17,6 +17,7 @@ int FindLabelAddress( const Assembler_t* assembler, const char* label_name ) {
     my_assert( assembler,   ASSERT_ERR_NULL_PTR );
     my_assert( label_name,  ASSERT_ERR_NULL_PTR );
     
+    // Поиск по точному совпадению имени
     for ( size_t i = 0; i < assembler->labels_count; i++ ) {
         if ( strcmp( assembler->labels[i].name, label_name ) == 0 ) {
             return assembler->labels[i].address;
@@ -35,7 +36,7 @@ int AddLabel( Assembler_t* assembler, const char* label_name, int address ) {
         return FAIL_RESULT;
     }
     
-    // Проверяем, что метка ещё не существует
+    // Проверяем, что метка еще не существует
     if ( FindLabelAddress( assembler, label_name ) != -1 ) {
         fprintf( stderr, COLOR_BRIGHT_RED "Label '%s' already defined\n" COLOR_RESET, label_name );
         return FAIL_RESULT;
@@ -150,7 +151,7 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 
         switch ( command ) {
             case MARK_CMD:
-                // Парсим название метки (:label_name)
+                // Парсим название метки (:label_name или :0)
                 strncpy( label_name, instruction + 1, MAX_LABEL_LEN - 1 );
                 label_name[MAX_LABEL_LEN - 1] = '\0';
                 
@@ -251,9 +252,23 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
             case JAE_CMD:
                 assembler->byte_code[ assembler->instruction_cnt++ ] = command;
 
-                // Парсим название метки
+                // Парсим название метки - может быть :0, :1, :label_name и т.д.
                 char target_label[MAX_LABEL_LEN] = "";
-                sscanf( str_pointer, ":%s", target_label );
+                int parsed = sscanf( str_pointer, ":%s", target_label );
+                
+                // Обрезаем пробелы и комментарии
+                for ( int j = 0; j < (int)strlen(target_label); j++ ) {
+                    if ( isspace(target_label[j]) || target_label[j] == ';' ) {
+                        target_label[j] = '\0';
+                        break;
+                    }
+                }
+                
+                if ( parsed != 1 || strlen(target_label) == 0 ) {
+                    fprintf( stderr, COLOR_BRIGHT_RED "No label specified for %s in file: %s:%lu\n", 
+                             (command == JMP_CMD) ? "JMP" : "conditional jump", assembler->asm_file.address, i + 1 );
+                    return FAIL_RESULT;
+                }
                 
                 int target_address = FindLabelAddress( assembler, target_label );
                 if ( target_address != -1 ) {
@@ -271,7 +286,20 @@ int TranslateAsmToByteCode( Assembler_t* assembler, StrPar* strings ) {
 
                 // Парсим название метки для CALL
                 char func_label[MAX_LABEL_LEN] = "";
-                sscanf( str_pointer, ":%s", func_label );
+                int parsed_call = sscanf( str_pointer, ":%s", func_label );
+                
+                // Обрезаем пробелы и комментарии
+                for ( int j = 0; j < (int)strlen(func_label); j++ ) {
+                    if ( isspace(func_label[j]) || func_label[j] == ';' ) {
+                        func_label[j] = '\0';
+                        break;
+                    }
+                }
+                
+                if ( parsed_call != 1 || strlen(func_label) == 0 ) {
+                    fprintf( stderr, COLOR_BRIGHT_RED "No function label specified for CALL in file: %s:%lu\n", assembler->asm_file.address, i + 1 );
+                    return FAIL_RESULT;
+                }
                 
                 int func_address = FindLabelAddress( assembler, func_label );
                 if ( func_address != -1 ) {
@@ -384,9 +412,9 @@ int ArgumentProcessing( Argument* argument, const char* string ) {
     char instruction[MAX_LABEL_LEN] = "";
     number_of_elements_read = sscanf( string, "%s", instruction );
     if ( number_of_elements_read == 1 ) {
-        // Проверяем метки с двоеточием (:label_name)
+        // Проверяем метки с двоеточием (:label_name или :0)
         if ( instruction[0] == ':' ) {
-            // Метка обнаружена, но адрес будет заполнен после
+            // Метка обнаружена, но адрес будет заполнен позже
             // Во втором проходе
             argument->type = LABEL;
             argument->value = 0;  // Временно, значение будет заменено
