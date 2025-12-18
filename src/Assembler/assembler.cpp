@@ -279,11 +279,13 @@ int AsmCodeProcessing( char* instruction ) {
     my_assert( instruction, ASSERT_ERR_NULL_PTR );
 
     if ( instruction[0] == ':' )                    { return MARK_CMD; }
-
-    if ( StrCompare( instruction, "PUSH" ) == 0 )  { return PUSH_CMD; }
+    
+    if ( StrCompare( instruction, "PUSHM" ) == 0 ) { return PUSHM_CMD; }
     if ( StrCompare( instruction, "PUSHR" ) == 0 ) { return PUSHR_CMD; }
-    if ( StrCompare( instruction, "POP"  ) == 0 )  { return POP_CMD;  }
+    if ( StrCompare( instruction, "PUSH" ) == 0 )  { return PUSH_CMD; }
+    if ( StrCompare( instruction, "POPM" ) == 0 )  { return POPM_CMD; }
     if ( StrCompare( instruction, "POPR" ) == 0 )  { return POPR_CMD;  }
+    if ( StrCompare( instruction, "POP"  ) == 0 )  { return POP_CMD;  }
     if ( StrCompare( instruction, "ADD"  ) == 0 )  { return ADD_CMD;  }
     if ( StrCompare( instruction, "SUB"  ) == 0 )  { return SUB_CMD;  }
     if ( StrCompare( instruction, "MUL"  ) == 0 )  { return MUL_CMD;  }
@@ -302,8 +304,6 @@ int AsmCodeProcessing( char* instruction ) {
     if ( StrCompare( instruction, "JBE"  ) == 0 )  { return JBE_CMD;  }
     if ( StrCompare( instruction, "JAE"  ) == 0 )  { return JAE_CMD;  }
 
-    if ( StrCompare( instruction, "PUSHM" ) == 0 ) { return PUSHM_CMD; }
-    if ( StrCompare( instruction, "POPM" ) == 0 )  { return POPM_CMD; }
 
     if ( StrCompare( instruction, "HLT"  ) == 0 )  { return HLT_CMD;  }
 
